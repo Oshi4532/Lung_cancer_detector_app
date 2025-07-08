@@ -39,6 +39,7 @@ class Lung_detect:
         button_frame.pack(anchor="center")
 
 
+
         self.update_frame()
 
 
@@ -47,8 +48,33 @@ class Lung_detect:
             ret, frame = self.vid.read()
             if ret:
                 results = self.model.predict(source=frame, imgsz=640, conf=0.25, verbose=False)
-                detected_frame = results[0].plot()
+                result = results[0]
 
+                class_ids  = result.boxes.cls.cpu().numpy() if result.boxes else []
+
+                num_NSCLC = 0
+                num_SCLC = 0
+
+                for class_id in class_ids:
+                    if int(class_id) == 0:
+                        num_NSCLC += 1 
+                    elif int(class_id) == 1:
+                        num_SCLC += 1
+
+
+
+                y_pos = 30
+                cv2.putText(frame, f"NSCLC: {num_NSCLC}", (10, y_pos),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (51, 87, 255), 2  )
+                y_pos += 30
+                cv2.putText(frame, f"SCLC: {num_SCLC}", (10, y_pos),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 195, 255), 2  )
+
+
+
+
+
+                detected_frame = result.plot()
                 frame_RGB = cv2.cvtColor(detected_frame, cv2.COLOR_BGR2RGB)
                 self.current_frame = Image.fromarray(frame_RGB)
                 self.photo = ImageTk.PhotoImage(image=self.current_frame)
@@ -72,6 +98,29 @@ class Lung_detect:
             image_bgr = cv2.imread(file_path)
             image_resized = cv2.resize(image_bgr, (640, 480))
             results = self.model.predict(source=image_resized, imgsz=640, conf=0.25, verbose=False)
+            result = results[0]
+
+            class_ids  = result.boxes.cls.cpu().numpy() if result.boxes else []
+
+            num_NSCLC = 0
+            num_SCLC = 0
+
+            for class_id in class_ids:
+                if int(class_id) == 0:
+                    num_NSCLC += 1 
+                elif int(class_id) == 1:
+                    num_SCLC += 1
+
+
+
+            y_pos = 30
+            cv2.putText(image_resized, f"NSCLC: {num_NSCLC}", (10, y_pos),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (51, 87, 255), 2 )
+            y_pos += 30
+            cv2.putText(image_resized, f"SCLC: {num_SCLC}", (10, y_pos),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 195, 255), 2 )
+
+
             detected_frame = results[0].plot()
 
             detected_RGB = cv2.cvtColor(detected_frame, cv2.COLOR_BGR2RGB)
